@@ -17,6 +17,17 @@
             height: 100vh;
             margin: 0;
             padding: 0;
+            position: relative;
+        }
+        
+        #matrixCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.09; /* Reduced opacity as requested */
         }
         
         .terminal {
@@ -24,6 +35,8 @@
             height: 100vh;
             overflow-y: auto;
             scrollbar-width: none;
+            position: relative;
+            z-index: 1;
         }
         
         .terminal::-webkit-scrollbar {
@@ -151,7 +164,7 @@
             background: linear-gradient(rgba(0, 255, 0, 0.03) 1px, transparent 1px);
             background-size: 100% 2px;
             pointer-events: none;
-            z-index: 1000;
+            z-index: 2;
         }
         
         .noise {
@@ -163,20 +176,29 @@
             background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAABOSURBVGhD7cExAQAAAMKg9U9tCF8gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHgZGWkAAXjz8AAAAABJRU5ErkJggg==');
             opacity: 0.03;
             pointer-events: none;
-            z-index: 1001;
+            z-index: 3;
         }
     </style>
 </head>
 <body class="bg-black text-green-500 font-mono">
+    <canvas id="matrixCanvas"></canvas>
     <div class="scanlines"></div>
     <div class="noise"></div>
     <div id="terminal" class="terminal"></div>
 
     <!-- Audio elements -->
-    <audio id="typingSound" src="https://assets.mixkit.co/sfx/preview/mixkit-fast-typing-112.mp3" preload="auto"></audio>
-    <audio id="glitchSound" src="https://assets.mixkit.co/sfx/preview/mixkit-computer-glitch-846.mp3" preload="auto"></audio>
-    <audio id="errorSound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-explosion-2759.mp3" preload="auto"></audio>
-    <audio id="backgroundMusic" loop src="https://assets.mixkit.co/music/preview/mixkit-suspense-horror-theme-270.mp3" preload="auto"></audio>
+    <audio id="typingSound" preload="auto">
+        <source src="./type.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="glitchSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-computer-glitch-846.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="errorSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-explosion-2759.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="backgroundMusic" loop preload="auto">
+        <source src="https://assets.mixkit.co/music/preview/mixkit-suspense-horror-theme-270.mp3" type="audio/mpeg">
+    </audio>
 
     <script>
         const terminal = document.getElementById('terminal');
@@ -187,6 +209,56 @@
         let currentScene = 'boot';
         let typingSpeed = 30;
         let glitchInterval;
+        let typingInterval;
+        
+        // Matrix rain code
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas dimensions
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // Matrix characters
+        const matrixChars = "アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        
+        // Drops array - y coordinate of each drop
+        const drops = [];
+        for (let i = 0; i < columns; i++) {
+            drops[i] = 1;
+        }
+        
+        // Draw Matrix rain
+        function drawMatrix() {
+            // Semi-transparent black to create trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#0f0';
+            ctx.font = `${fontSize}px monospace`;
+            
+            for (let i = 0; i < drops.length; i++) {
+                const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                
+                drops[i]++;
+            }
+        }
+        
+        // Resize canvas when window is resized
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+        
+        // Start Matrix animation
+        setInterval(drawMatrix, 35);
         
         // Story script
         const story = {
@@ -319,6 +391,18 @@
             }, 5000);
         }
         
+        // Play typing sound
+        function playTypingSound() {
+            // Reset and play the sound
+            typingSound.currentTime = 0;
+            typingSound.play().catch(e => console.log("Sound error:", e));
+        }
+        
+        // Stop typing sound
+        function stopTypingSound() {
+            typingSound.pause();
+        }
+        
         // Play boot sequence
         function playBootSequence() {
             let i = 0;
@@ -380,6 +464,10 @@
             const lineElement = document.createElement('div');
             terminal.appendChild(lineElement);
             
+            // Start playing typing sound on loop
+            playTypingSound();
+            typingInterval = setInterval(playTypingSound, 200);
+            
             function type() {
                 if (i < text.length) {
                     // Random chance to glitch
@@ -403,11 +491,12 @@
                     
                     // Random typing speed variation
                     const speed = typingSpeed + (Math.random() * 20 - 10);
-                    // Play typing sound
-                    typingSound.currentTime = 0;
-                    typingSound.play().catch(e => console.log("Sound error:", e));
                     setTimeout(type, speed);
                 } else {
+                    // Stop typing sound when done
+                    clearInterval(typingInterval);
+                    stopTypingSound();
+                    
                     if (callback) callback();
                 }
             }
