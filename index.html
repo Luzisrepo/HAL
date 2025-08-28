@@ -187,6 +187,30 @@
     <div id="terminal" class="terminal"></div>
 
     <!-- Audio elements -->
+      <audio id="bg-music" autoplay loop>
+    <source src="coolsuspensemusic.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+
+  <script>
+    const music = document.getElementById("bg-music");
+
+    // Try to autoplay immediately
+    music.play().catch(() => {
+      // If blocked, create a click-to-start button
+      const btn = document.createElement("button");
+      btn.innerText = "Play Music";
+      btn.style.fontSize = "20px";
+      btn.style.padding = "10px 20px";
+      document.body.appendChild(btn);
+
+      btn.addEventListener("click", () => {
+        music.play();
+        btn.remove();
+      });
+    });
+  </script>
+
     <audio id="typingSound" preload="auto">
         <source src="./type.mp3" type="audio/mpeg">
     </audio>
