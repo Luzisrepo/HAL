@@ -509,24 +509,24 @@
             
             function type() {
                 if (i < text.length) {
-                    // Random chance to glitch
-                    if (Math.random() > 0.98) {
-                        const glitchElement = document.createElement('span');
-                        glitchElement.className = 'glitch';
-                        glitchElement.textContent = text.substring(i, i + 3);
-                        glitchElement.setAttribute('data-text', text.substring(i, i + 3));
-                        lineElement.appendChild(glitchElement);
-                        i += 3;
-                        glitchSound.currentTime = 0;
-                        glitchSound.play().catch(e => console.log("Sound error:", e));
-                        setTimeout(() => {
-                            glitchElement.remove();
-                            lineElement.textContent = text.substring(0, i);
-                        }, 200);
-                    } else {
-                        lineElement.textContent = text.substring(0, i + 1);
-                        i++;
-                    }
+                   // Random chance to glitch - reduced from 0.98 to 0.995 to make it much less frequent
+if (Math.random() > 0.995) {
+    const glitchElement = document.createElement('span');
+    glitchElement.className = 'glitch';
+    glitchElement.textContent = text.substring(i, i + 3);
+    glitchElement.setAttribute('data-text', text.substring(i, i + 3));
+    lineElement.appendChild(glitchElement);
+    i += 3;
+    glitchSound.currentTime = 0;
+    glitchSound.play().catch(e => console.log("Sound error:", e));
+    setTimeout(() => {
+        glitchElement.remove();
+        lineElement.textContent = text.substring(0, i);
+    }, 200);
+} else {
+    lineElement.textContent = text.substring(0, i + 1);
+    i++;
+}
                     
                     // Random typing speed variation
                     const speed = typingSpeed + (Math.random() * 20 - 10);
