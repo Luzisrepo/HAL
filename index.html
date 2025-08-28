@@ -187,29 +187,44 @@
     <div id="terminal" class="terminal"></div>
 
     <!-- Audio elements -->
-      <audio id="bg-music" autoplay loop>
-    <source src="coolsuspensemusic.mp3" type="audio/mpeg">
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Background Music with Fade In</title>
+</head>
+<body>
+  <h1>Welcome!</h1>
+  <p>Click anywhere to start the music 🎶</p>
+
+  <!-- Audio -->
+  <audio id="bg-music" loop autoplay muted>
+    <source src="./coolsuspensemusic.mp3" type="audio/mpeg">
     Your browser does not support the audio element.
   </audio>
 
   <script>
     const music = document.getElementById("bg-music");
 
-    // Try to autoplay immediately
-    music.play().catch(() => {
-      // If blocked, create a click-to-start button
-      const btn = document.createElement("button");
-      btn.innerText = "Play Music";
-      btn.style.fontSize = "20px";
-      btn.style.padding = "10px 20px";
-      document.body.appendChild(btn);
+    // Wait for first click to unmute + fade in
+    document.addEventListener("click", () => {
+      music.muted = false;
+      music.volume = 0;   // start at 0 volume
+      music.play();
 
-      btn.addEventListener("click", () => {
-        music.play();
-        btn.remove();
-      });
-    });
+      let fade = setInterval(() => {
+        if (music.volume < 1) {
+          music.volume = Math.min(1, music.volume + 0.05); // increase gradually
+        } else {
+          clearInterval(fade);
+        }
+      }, 200); // every 200ms raise volume
+    }, { once: true });
   </script>
+</body>
+</html>
+
 
     <audio id="typingSound" preload="auto">
         <source src="./type.mp3" type="audio/mpeg">
