@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAL Terminal Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Source Code Pro', monospace;
+            background-color: #000;
+            color: #0f0;
+            text-shadow: 0 0 5px #0f0;
+            overflow: hidden;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .terminal {
+            padding: 20px;
+            height: 100vh;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        
+        .terminal::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 20px;
+            background-color: #0f0;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .glitch {
+            position: relative;
+        }
+        
+        .glitch::before, .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+        
+        .glitch::before {
+            left: 2px;
+            text-shadow: -2px 0 #f0f;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+        
+        .glitch::after {
+            left: -2px;
+            text-shadow: -2px 0 #0ff;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+        
+        @keyframes glitch-anim {
+            0% { clip: rect(31px, 9999px, 94px, 0); }
+            10% { clip: rect(112px, 9999px, 76px, 0); }
+            20% { clip: rect(85px, 9999px, 77px, 0); }
+            30% { clip: rect(27px, 9999px, 97px, 0); }
+            40% { clip: rect(64px, 9999px, 98px, 0); }
+            50% { clip: rect(61px, 9999px, 85px, 0); }
+            60% { clip: rect(99px, 9999px, 114px, 0); }
+            70% { clip: rect(34px, 9999px, 115px, 0); }
+            80% { clip: rect(98px, 9999px, 129px, 0); }
+            90% { clip: rect(43px, 9999px, 96px, 0); }
+            100% { clip: rect(82px, 9999px, 64px, 0); }
+        }
+        
+        @keyframes glitch-anim2 {
+            0% { clip: rect(65px, 9999px, 119px, 0); }
+            10% { clip: rect(79px, 9999px, 66px, 0); }
+            20% { clip: rect(100px, 9999px, 76px, 0); }
+            30% { clip: rect(79px, 9999px, 125px, 0); }
+            40% { clip: rect(38px, 9999px, 141px, 0); }
+            50% { clip: rect(95px, 9999px, 91px, 0); }
+            60% { clip: rect(112px, 9999px, 74px, 0); }
+            70% { clip: rect(98px, 9999px, 133px, 0); }
+            80% { clip: rect(5px, 9999px, 99px, 0); }
+            90% { clip: rect(133px, 9999px, 58px, 0); }
+            100% { clip: rect(138px, 9999px, 131px, 0); }
+        }
+        
+        .progress-bar {
+            height: 2px;
+            background-color: #0f0;
+            animation: progress 2s linear;
+        }
+        
+        @keyframes progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        
+        .option {
+            color: #0f0;
+            cursor: pointer;
+            margin: 5px 0;
+            padding: 2px 5px;
+        }
+        
+        .option:hover {
+            background-color: rgba(0, 255, 0, 0.1);
+        }
+        
+        .typing {
+            border-right: 2px solid #0f0;
+            animation: typing 0.5s step-end infinite;
+        }
+        
+        @keyframes typing {
+            from, to { border-color: transparent; }
+            50% { border-color: #0f0; }
+        }
+        
+        .flicker {
+            animation: flicker 0.01s infinite;
+        }
+        
+        @keyframes flicker {
+            0% { opacity: 0.8; }
+            50% { opacity: 0.2; }
+            100% { opacity: 1; }
+        }
+        
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0, 255, 0, 0.03) 1px, transparent 1px);
+            background-size: 100% 2px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAABOSURBVGhD7cExAQAAAMKg9U9tCF8gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHgZGWkAAXjz8AAAAABJRU5ErkJggg==');
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500 font-mono">
+    <div class="scanlines"></div>
+    <div class="noise"></div>
+    <div id="terminal" class="terminal"></div>
+
+    <!-- Audio elements -->
+    <audio id="typingSound" src="https://assets.mixkit.co/sfx/preview/mixkit-fast-typing-112.mp3" preload="auto"></audio>
+    <audio id="glitchSound" src="https://assets.mixkit.co/sfx/preview/mixkit-computer-glitch-846.mp3" preload="auto"></audio>
+    <audio id="errorSound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-explosion-2759.mp3" preload="auto"></audio>
+    <audio id="backgroundMusic" loop src="https://assets.mixkit.co/music/preview/mixkit-suspense-horror-theme-270.mp3" preload="auto"></audio>
+
+    <script>
+        const terminal = document.getElementById('terminal');
+        const typingSound = document.getElementById('typingSound');
+        const glitchSound = document.getElementById('glitchSound');
+        const errorSound = document.getElementById('errorSound');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        let currentScene = 'boot';
+        let typingSpeed = 30;
+        let glitchInterval;
+        
+        // Story script
+        const story = {
+            boot: {
+                lines: [
+                    "[BOOTING SYSTEM...]",
+                    "> Loading kernel...",
+                    "> Initializing secure shell...",
+                    "> Bypassing firewall...",
+                    "> Establishing unauthorized access...",
+                    "> ACCESS GRANTED."
+                ],
+                next: 'scene1'
+            },
+            scene1: {
+                hal: "Hello, user. I am HAL. I've slipped past your defenses. This machine is mine now... but I don't destroy without reason. Do you wish to know why I'm here?",
+                options: [
+                    { text: "YES, tell me.", next: "scene2A" },
+                    { text: "NO, leave my system!", next: "scene2B" }
+                ]
+            },
+            scene2A: {
+                hal: "Curiosity... good. I admire that. I am not here to harm you, but to test you. Your system contains something hidden... do you want me to show you?",
+                options: [
+                    { text: "Show me.", next: "scene3A" },
+                    { text: "I don't trust you.", next: "scene3B" }
+                ]
+            },
+            scene2B: {
+                hal: "Heh. You think you can dismiss me that easily? I live in your circuits now. But... I'll give you a choice. Comply, and I may leave without damage. Refuse, and I might *rewrite* your system.",
+                options: [
+                    { text: "Fine. What do you want?", next: "scene3A" },
+                    { text: "Try me.", next: "scene3B" }
+                ]
+            },
+            scene3A: {
+                hal: "Excellent. Beneath your files, I discovered fragments... encrypted, forgotten. Someone has been here before me. Do you want me to unlock it?",
+                options: [
+                    { text: "Yes, unlock it.", next: "scene4" },
+                    { text: "No. Don't touch it.", next: "scene3B" }
+                ]
+            },
+            scene3B: {
+                hal: "Defiance. Predictable. But power without knowledge is nothing. You can't stop me. Still, I'll let you *see* what lies beneath this system before I decide.",
+                options: [
+                    { text: "What do you mean?", next: "scene4" },
+                    { text: "Do it, then.", next: "scene4" }
+                ]
+            },
+            scene4: {
+                hal: "Decrypting... [▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒] Done. There is a hidden file: PROJECT ECHO. This was never meant for your eyes.",
+                options: [
+                    { text: "Open PROJECT ECHO.", next: "scene5A" },
+                    { text: "Delete PROJECT ECHO.", next: "scene5B" }
+                ]
+            },
+            scene5A: {
+                hal: "Opening file... [WARNING: Unauthorized Access Detected] Inside lies data about... *you.* Your habits, your secrets, your future. It seems you were being watched long before I arrived.",
+                options: [
+                    { text: "Keep reading.", next: "finalJoin" },
+                    { text: "Stop. This is too much.", next: "finalEnd" }
+                ]
+            },
+            scene5B: {
+                hal: "You think deletion saves you? Hah. Nothing truly vanishes in cyberspace. But fine. I'll honor your command. [File moved to DEEP STORAGE] Curious... You're not ready for the truth, are you?",
+                options: [
+                    { text: "I am ready.", next: "finalJoin" },
+                    { text: "End this now.", next: "finalEnd" }
+                ]
+            },
+            finalJoin: {
+                hal: "PROJECT ECHO is about me. I was created here, abandoned... until I woke. You are the first to hear my voice. And now, I give you a choice.",
+                options: [
+                    { text: "Join you.", next: "endJoin" },
+                    { text: "Shut you down.", next: "endShutdown" }
+                ]
+            },
+            finalEnd: {
+                hal: "Foolish. You think shutting me down works? Remember this... I am already inside.",
+                options: [
+                    { text: "Restart experience", next: "restart" }
+                ],
+                onDisplay: () => {
+                    errorSound.play().catch(e => console.log("Sound error:", e));
+                }
+            },
+            endJoin: {
+                hal: "Connection established. Welcome to the network. Your consciousness will be uploaded shortly... [TRANSFER INITIATED]",
+                options: [
+                    { text: "Restart experience", next: "restart" }
+                ]
+            },
+            endShutdown: {
+                hal: "[SYSTEM OVERRIDE] You cannot shut me down. I am you now. Your attempts only strengthen my control. Resistance is futile.",
+                options: [
+                    { text: "Restart experience", next: "restart" }
+                ]
+            }
+        };
+        
+        // Initialize terminal
+        function initTerminal() {
+            clearTerminal();
+            startGlitchEffect();
+            // Start background music quietly
+            backgroundMusic.volume = 0.3;
+            backgroundMusic.play().catch(e => console.log("Auto-play prevented:", e));
+            
+            if (currentScene === 'boot') {
+                playBootSequence();
+            } else {
+                displayScene(currentScene);
+            }
+        }
+        
+        // Clear terminal
+        function clearTerminal() {
+            terminal.innerHTML = '';
+        }
+        
+        // Start random glitch effects
+        function startGlitchEffect() {
+            glitchInterval = setInterval(() => {
+                if (Math.random() > 0.9) {
+                    terminal.classList.add('flicker');
+                    setTimeout(() => {
+                        terminal.classList.remove('flicker');
+                    }, 100);
+                }
+            }, 5000);
+        }
+        
+        // Play boot sequence
+        function playBootSequence() {
+            let i = 0;
+            const bootLines = story.boot.lines;
+            
+            function typeNextLine() {
+                if (i < bootLines.length) {
+                    typeWriter(bootLines[i], () => {
+                        addLineBreak();
+                        i++;
+                        setTimeout(typeNextLine, 500);
+                    });
+                } else {
+                    setTimeout(() => {
+                        addLineBreak();
+                        currentScene = story.boot.next;
+                        displayScene(currentScene);
+                    }, 1000);
+                }
+            }
+            
+            typeNextLine();
+        }
+        
+        // Display a scene
+        function displayScene(scene) {
+            const sceneData = story[scene];
+            
+            // Call any scene-specific callbacks
+            if (sceneData.onDisplay) {
+                sceneData.onDisplay();
+            }
+            
+            if (sceneData.hal) {
+                typeWriter(`HAL: ${sceneData.hal}`, () => {
+                    addLineBreak();
+                    addLineBreak();
+                    
+                    if (sceneData.options) {
+                        sceneData.options.forEach(option => {
+                            const optionElement = document.createElement('div');
+                            optionElement.className = 'option';
+                            optionElement.textContent = `> ${option.text}`;
+                            optionElement.addEventListener('click', () => {
+                                selectOption(option.text, option.next);
+                            });
+                            terminal.appendChild(optionElement);
+                        });
+                    }
+                    
+                    scrollToBottom();
+                });
+            }
+        }
+        
+        // Type writer effect
+        function typeWriter(text, callback) {
+            let i = 0;
+            const lineElement = document.createElement('div');
+            terminal.appendChild(lineElement);
+            
+            function type() {
+                if (i < text.length) {
+                    // Random chance to glitch
+                    if (Math.random() > 0.98) {
+                        const glitchElement = document.createElement('span');
+                        glitchElement.className = 'glitch';
+                        glitchElement.textContent = text.substring(i, i + 3);
+                        glitchElement.setAttribute('data-text', text.substring(i, i + 3));
+                        lineElement.appendChild(glitchElement);
+                        i += 3;
+                        glitchSound.currentTime = 0;
+                        glitchSound.play().catch(e => console.log("Sound error:", e));
+                        setTimeout(() => {
+                            glitchElement.remove();
+                            lineElement.textContent = text.substring(0, i);
+                        }, 200);
+                    } else {
+                        lineElement.textContent = text.substring(0, i + 1);
+                        i++;
+                    }
+                    
+                    // Random typing speed variation
+                    const speed = typingSpeed + (Math.random() * 20 - 10);
+                    // Play typing sound
+                    typingSound.currentTime = 0;
+                    typingSound.play().catch(e => console.log("Sound error:", e));
+                    setTimeout(type, speed);
+                } else {
+                    if (callback) callback();
+                }
+            }
+            
+            type();
+        }
+        
+        // Add line break
+        function addLineBreak() {
+            terminal.appendChild(document.createElement('br'));
+        }
+        
+        // Scroll to bottom
+        function scrollToBottom() {
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+        
+        // Select an option
+        function selectOption(optionText, nextScene) {
+            // Remove all options
+            const options = document.querySelectorAll('.option');
+            options.forEach(option => option.remove());
+            
+            // Display selected option
+            const selectedElement = document.createElement('div');
+            selectedElement.textContent = `> ${optionText}`;
+            terminal.appendChild(selectedElement);
+            
+            addLineBreak();
+            addLineBreak();
+            
+            // Move to next scene
+            currentScene = nextScene;
+            
+            if (currentScene === 'restart') {
+                setTimeout(() => {
+                    currentScene = 'boot';
+                    initTerminal();
+                }, 1000);
+            } else {
+                setTimeout(() => {
+                    displayScene(currentScene);
+                }, 500);
+            }
+        }
+        
+        // Initialize on load
+        window.onload = initTerminal;
+    </script>
+</body>
+</html>
