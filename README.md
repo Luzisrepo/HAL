@@ -20,7 +20,7 @@
 > Offline mode DOES need wifi for the IP grabber part, but you can use it without it just fine. (but the script might break)
 
 # TO-DO LIST
-> Rewrite offline mode with python.
-> Add audio and effects to offline mode.
-> Add file creating and file management, aswell as threats by HAL.
-> Adding an end cutscene. (offline mode)
+- Rewrite offline mode with python.
+- Add audio and effects to offline mode.
+- Add file creating and file management, aswell as threats by HAL.
+- Adding an end cutscene. (offline mode)
