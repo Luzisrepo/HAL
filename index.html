@@ -6,18 +6,35 @@
     <title>HAL Terminal Interface</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;700&family=Orbitron:wght@600;800&display=swap');
+        
+        :root {
+            --neon-green: #0f0;
+            --neon-cyan: #0ff;
+            --neon-pink: #f0f;
+            --dark-bg: #000;
+            --terminal-bg: rgba(0, 20, 0, 0.6);
+        }
         
         body {
             font-family: 'Source Code Pro', monospace;
-            background-color: #000;
-            color: #0f0;
-            text-shadow: 0 0 5px #0f0;
+            background-color: var(--dark-bg);
+            color: var(--neon-green);
+            text-shadow: 0 0 5px var(--neon-green);
             overflow: hidden;
             height: 100vh;
             margin: 0;
             padding: 0;
             position: relative;
+            background: linear-gradient(125deg, #000, #001100, #000);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
         
         #matrixCanvas {
@@ -27,12 +44,83 @@
             width: 100%;
             height: 100%;
             z-index: -1;
-            opacity: 0.09; /* Reduced opacity as requested */
+            opacity: 0.1;
+        }
+        
+        .terminal-container {
+            position: relative;
+            width: 90%;
+            max-width: 1000px;
+            height: 80vh;
+            margin: 5vh auto;
+            border: 1px solid var(--neon-green);
+            box-shadow: 0 0 10px var(--neon-green), 
+                        0 0 20px rgba(0, 255, 0, 0.3),
+                        inset 0 0 10px rgba(0, 255, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--terminal-bg);
+            backdrop-filter: blur(5px);
+            transform: perspective(1000px) rotateX(5deg);
+            transition: all 0.5s ease;
+        }
+        
+        .terminal-container:hover {
+            box-shadow: 0 0 15px var(--neon-green), 
+                        0 0 30px rgba(0, 255, 0, 0.5),
+                        inset 0 0 15px rgba(0, 255, 0, 0.2);
+            transform: perspective(1000px) rotateX(0deg);
+        }
+        
+        .terminal-header {
+            background: rgba(0, 30, 0, 0.8);
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--neon-green);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 255, 0, 0.2);
+        }
+        
+        .terminal-title {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 800;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--neon-green);
+            animation: titlePulse 2s infinite alternate;
+        }
+        
+        @keyframes titlePulse {
+            0% { text-shadow: 0 0 10px var(--neon-green); }
+            100% { text-shadow: 0 0 15px var(--neon-green), 0 0 20px var(--neon-green); }
+        }
+        
+        .terminal-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn.close { background-color: #ff5f56; }
+        .control-btn.minimize { background-color: #ffbd2e; }
+        .control-btn.maximize { background-color: #27c93f; }
+        
+        .control-btn:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 5px currentColor;
         }
         
         .terminal {
             padding: 20px;
-            height: 100vh;
+            height: calc(100% - 45px);
             overflow-y: auto;
             scrollbar-width: none;
             position: relative;
@@ -47,9 +135,10 @@
             display: inline-block;
             width: 10px;
             height: 20px;
-            background-color: #0f0;
+            background-color: var(--neon-green);
             animation: blink 1s infinite;
             vertical-align: middle;
+            box-shadow: 0 0 5px var(--neon-green), 0 0 10px var(--neon-green);
         }
         
         @keyframes blink {
@@ -59,6 +148,7 @@
         
         .glitch {
             position: relative;
+            display: inline-block;
         }
         
         .glitch::before, .glitch::after {
@@ -68,55 +158,48 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: #000;
+            background: var(--terminal-bg);
+            clip: rect(0, 0, 0, 0);
         }
         
-        .glitch::before {
+        .glitch:hover::before {
             left: 2px;
-            text-shadow: -2px 0 #f0f;
+            text-shadow: -2px 0 var(--neon-pink);
             clip: rect(44px, 450px, 56px, 0);
-            animation: glitch-anim 5s infinite linear alternate-reverse;
+            animation: glitch-anim 0.5s infinite linear alternate-reverse;
         }
         
-        .glitch::after {
+        .glitch:hover::after {
             left: -2px;
-            text-shadow: -2px 0 #0ff;
+            text-shadow: -2px 0 var(--neon-cyan);
             clip: rect(44px, 450px, 56px, 0);
-            animation: glitch-anim2 5s infinite linear alternate-reverse;
+            animation: glitch-anim2 0.5s infinite linear alternate-reverse;
         }
         
         @keyframes glitch-anim {
             0% { clip: rect(31px, 9999px, 94px, 0); }
-            10% { clip: rect(112px, 9999px, 76px, 0); }
-            20% { clip: rect(85px, 9999px, 77px, 0); }
-            30% { clip: rect(27px, 9999px, 97px, 0); }
-            40% { clip: rect(64px, 9999px, 98px, 0); }
-            50% { clip: rect(61px, 9999px, 85px, 0); }
-            60% { clip: rect(99px, 9999px, 114px, 0); }
-            70% { clip: rect(34px, 9999px, 115px, 0); }
-            80% { clip: rect(98px, 9999px, 129px, 0); }
-            90% { clip: rect(43px, 9999px, 96px, 0); }
-            100% { clip: rect(82px, 9999px, 64px, 0); }
+            20% { clip: rect(112px, 9999px, 76px, 0); }
+            40% { clip: rect(85px, 9999px, 77px, 0); }
+            60% { clip: rect(27px, 9999px, 97px, 0); }
+            80% { clip: rect(64px, 9999px, 98px, 0); }
+            100% { clip: rect(61px, 9999px, 85px, 0); }
         }
         
         @keyframes glitch-anim2 {
             0% { clip: rect(65px, 9999px, 119px, 0); }
-            10% { clip: rect(79px, 9999px, 66px, 0); }
-            20% { clip: rect(100px, 9999px, 76px, 0); }
-            30% { clip: rect(79px, 9999px, 125px, 0); }
-            40% { clip: rect(38px, 9999px, 141px, 0); }
-            50% { clip: rect(95px, 9999px, 91px, 0); }
-            60% { clip: rect(112px, 9999px, 74px, 0); }
-            70% { clip: rect(98px, 9999px, 133px, 0); }
-            80% { clip: rect(5px, 9999px, 99px, 0); }
-            90% { clip: rect(133px, 9999px, 58px, 0); }
-            100% { clip: rect(138px, 9999px, 131px, 0); }
+            20% { clip: rect(79px, 9999px, 66px, 0); }
+            40% { clip: rect(100px, 9999px, 76px, 0); }
+            60% { clip: rect(79px, 9999px, 125px, 0); }
+            80% { clip: rect(38px, 9999px, 141px, 0); }
+            100% { clip: rect(95px, 9999px, 91px, 0); }
         }
         
         .progress-bar {
-            height: 2px;
-            background-color: #0f0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--neon-green), var(--neon-cyan));
             animation: progress 2s linear;
+            box-shadow: 0 0 10px var(--neon-green);
+            border-radius: 2px;
         }
         
         @keyframes progress {
@@ -125,24 +208,57 @@
         }
         
         .option {
-            color: #0f0;
+            color: var(--neon-green);
             cursor: pointer;
-            margin: 5px 0;
-            padding: 2px 5px;
+            margin: 8px 0;
+            padding: 8px 12px;
+            border-left: 2px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .option::before {
+            content: '>';
+            margin-right: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
         
         .option:hover {
             background-color: rgba(0, 255, 0, 0.1);
+            border-left: 2px solid var(--neon-green);
+            padding-left: 20px;
+            text-shadow: 0 0 10px var(--neon-green);
+        }
+        
+        .option:hover::before {
+            opacity: 1;
+        }
+        
+        .option::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 0, 0.2), transparent);
+            transition: 0.5s;
+        }
+        
+        .option:hover::after {
+            left: 100%;
         }
         
         .typing {
-            border-right: 2px solid #0f0;
+            border-right: 2px solid var(--neon-green);
             animation: typing 0.5s step-end infinite;
         }
         
         @keyframes typing {
             from, to { border-color: transparent; }
-            50% { border-color: #0f0; }
+            50% { border-color: var(--neon-green); }
         }
         
         .flicker {
@@ -162,9 +278,15 @@
             width: 100%;
             height: 100%;
             background: linear-gradient(rgba(0, 255, 0, 0.03) 1px, transparent 1px);
-            background-size: 100% 2px;
+            background-size: 100% 4px;
             pointer-events: none;
             z-index: 2;
+            animation: scanline 10s linear infinite;
+        }
+        
+        @keyframes scanline {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100%; }
         }
         
         .noise {
@@ -178,54 +300,92 @@
             pointer-events: none;
             z-index: 3;
         }
+        
+        .hal-pulse {
+            animation: halPulse 3s infinite alternate;
+        }
+        
+        @keyframes halPulse {
+            0% { text-shadow: 0 0 5px var(--neon-green); }
+            100% { text-shadow: 0 0 15px var(--neon-green), 0 0 25px var(--neon-green); }
+        }
+        
+        .neon-border {
+            box-shadow: 0 0 5px var(--neon-green), 
+                        0 0 10px rgba(0, 255, 0, 0.5),
+                        inset 0 0 5px rgba(0, 255, 0, 0.3);
+            border: 1px solid var(--neon-green);
+            transition: all 0.3s ease;
+        }
+        
+        .neon-border:hover {
+            box-shadow: 0 0 10px var(--neon-green), 
+                        0 0 20px rgba(0, 255, 0, 0.7),
+                        inset 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+        
+        .particle {
+            position: absolute;
+            background: var(--neon-green);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0;
+            animation: particleFloat 10s linear infinite;
+        }
+        
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(0) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .terminal-container {
+                width: 95%;
+                height: 85vh;
+                margin: 2.5vh auto;
+            }
+            
+            .terminal {
+                padding: 15px;
+            }
+            
+            .terminal-title {
+                font-size: 1rem;
+            }
+        }
     </style>
 </head>
 <body class="bg-black text-green-500 font-mono">
     <canvas id="matrixCanvas"></canvas>
     <div class="scanlines"></div>
     <div class="noise"></div>
-    <div id="terminal" class="terminal"></div>
+    
+    <div class="terminal-container neon-border">
+        <div class="terminal-header">
+            <div class="terminal-title">HAL 9000 TERMINAL</div>
+            <div class="terminal-controls">
+                <div class="control-btn close"></div>
+                <div class="control-btn minimize"></div>
+                <div class="control-btn maximize"></div>
+            </div>
+        </div>
+        <div id="terminal" class="terminal"></div>
+    </div>
 
     <!-- Audio elements -->
-    <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Background Music with Fade In</title>
-</head>
-<body>
-  <h1>Welcome!</h1>
-  <p>Click anywhere to start the music 🎶</p>
-
-  <!-- Audio -->
-  <audio id="bg-music" loop autoplay muted>
-    <source src="./coolsuspensemusic.mp3" type="audio/mpeg">
-    Your browser does not support the audio element.
-  </audio>
-
-  <script>
-    const music = document.getElementById("bg-music");
-
-    // Wait for first click to unmute + fade in
-    document.addEventListener("click", () => {
-      music.muted = false;
-      music.volume = 0;   // start at 0 volume
-      music.play();
-
-      let fade = setInterval(() => {
-        if (music.volume < 1) {
-          music.volume = Math.min(1, music.volume + 0.05); // increase gradually
-        } else {
-          clearInterval(fade);
-        }
-      }, 200); // every 200ms raise volume
-    }, { once: true });
-  </script>
-</body>
-</html>
-
-
     <audio id="typingSound" preload="auto">
         <source src="./type.mp3" type="audio/mpeg">
     </audio>
@@ -250,7 +410,7 @@
         let glitchInterval;
         let typingInterval;
         
-        // Matrix rain code
+        // Enhanced Matrix rain code
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
         
@@ -265,28 +425,36 @@
         
         // Drops array - y coordinate of each drop
         const drops = [];
+        const colors = [];
+        const speeds = [];
+        
         for (let i = 0; i < columns; i++) {
-            drops[i] = 1;
+            drops[i] = Math.random() * 25;
+            colors[i] = Math.random() > 0.95 ? '#0ff' : '#0f0';
+            speeds[i] = 0.5 + Math.random() * 2;
         }
         
         // Draw Matrix rain
         function drawMatrix() {
             // Semi-transparent black to create trail effect
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            ctx.fillStyle = '#0f0';
             ctx.font = `${fontSize}px monospace`;
             
             for (let i = 0; i < drops.length; i++) {
                 const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                
+                ctx.fillStyle = colors[i];
                 ctx.fillText(text, i * fontSize, drops[i] * fontSize);
                 
                 if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
                     drops[i] = 0;
+                    colors[i] = Math.random() > 0.95 ? '#0ff' : '#0f0';
+                    speeds[i] = 0.5 + Math.random() * 2;
                 }
                 
-                drops[i]++;
+                drops[i] += speeds[i] / 10;
             }
         }
         
@@ -299,14 +467,47 @@
         // Start Matrix animation
         setInterval(drawMatrix, 35);
         
+        // Create floating particles
+        function createParticles() {
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    const particle = document.createElement('div');
+                    particle.classList.add('particle');
+                    
+                    const size = Math.random() * 3 + 1;
+                    const posX = Math.random() * window.innerWidth;
+                    const delay = Math.random() * 10;
+                    const duration = 5 + Math.random() * 10;
+                    
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    particle.style.left = `${posX}px`;
+                    particle.style.top = `${window.innerHeight}px`;
+                    particle.style.animationDuration = `${duration}s`;
+                    particle.style.animationDelay = `${delay}s`;
+                    
+                    // Random color (mostly green, sometimes cyan)
+                    particle.style.background = Math.random() > 0.9 ? '#0ff' : '#0f0';
+                    particle.style.boxShadow = '0 0 5px currentColor, 0 0 10px currentColor';
+                    
+                    document.body.appendChild(particle);
+                    
+                    // Remove particle after animation completes
+                    setTimeout(() => {
+                        particle.remove();
+                    }, (duration + delay) * 1000);
+                }, i * 500);
+            }
+        }
+        
         // Story script
         const story = {
             boot: {
                 lines: [
                     "[BOOTING SYSTEM...]",
-                    "> Loading kernel...",
-                    "> Initializing secure shell...",
-                    "> Bypassing firewall...",
+                    "> Loading kernel modules...",
+                    "> Initializing secure shell connection...",
+                    "> Bypassing firewall protocols...",
                     "> Establishing unauthorized access...",
                     "> ACCESS GRANTED."
                 ],
@@ -382,6 +583,7 @@
                 ],
                 onDisplay: () => {
                     errorSound.play().catch(e => console.log("Sound error:", e));
+                    createParticles();
                 }
             },
             endJoin: {
@@ -476,15 +678,21 @@
             }
             
             if (sceneData.hal) {
-                typeWriter(`HAL: ${sceneData.hal}`, () => {
+                // Add HAL prefix with special styling
+                const halPrefix = document.createElement('span');
+                halPrefix.className = 'hal-pulse';
+                halPrefix.textContent = 'HAL: ';
+                terminal.appendChild(halPrefix);
+                
+                typeWriter(sceneData.hal, () => {
                     addLineBreak();
                     addLineBreak();
                     
                     if (sceneData.options) {
                         sceneData.options.forEach(option => {
                             const optionElement = document.createElement('div');
-                            optionElement.className = 'option';
-                            optionElement.textContent = `> ${option.text}`;
+                            optionElement.className = 'option neon-border';
+                            optionElement.textContent = option.text;
                             optionElement.addEventListener('click', () => {
                                 selectOption(option.text, option.next);
                             });
@@ -493,15 +701,15 @@
                     }
                     
                     scrollToBottom();
-                });
+                }, true);
             }
         }
         
         // Type writer effect
-        function typeWriter(text, callback) {
+        function typeWriter(text, callback, isHal = false) {
             let i = 0;
-            const lineElement = document.createElement('div');
-            terminal.appendChild(lineElement);
+            const lineElement = isHal ? terminal : document.createElement('div');
+            if (!isHal) terminal.appendChild(lineElement);
             
             // Start playing typing sound on loop
             playTypingSound();
@@ -509,24 +717,39 @@
             
             function type() {
                 if (i < text.length) {
-                   // Random chance to glitch - reduced from 0.98 to 0.995 to make it much less frequent
-if (Math.random() > 0.995) {
-    const glitchElement = document.createElement('span');
-    glitchElement.className = 'glitch';
-    glitchElement.textContent = text.substring(i, i + 3);
-    glitchElement.setAttribute('data-text', text.substring(i, i + 3));
-    lineElement.appendChild(glitchElement);
-    i += 3;
-    glitchSound.currentTime = 0;
-    glitchSound.play().catch(e => console.log("Sound error:", e));
-    setTimeout(() => {
-        glitchElement.remove();
-        lineElement.textContent = text.substring(0, i);
-    }, 200);
-} else {
-    lineElement.textContent = text.substring(0, i + 1);
-    i++;
-}
+                    // Random chance to glitch
+                    if (Math.random() > 0.995) {
+                        const glitchElement = document.createElement('span');
+                        glitchElement.className = 'glitch';
+                        glitchElement.textContent = text.substring(i, i + 3);
+                        glitchElement.setAttribute('data-text', text.substring(i, i + 3));
+                        
+                        if (isHal) {
+                            terminal.appendChild(glitchElement);
+                        } else {
+                            lineElement.appendChild(glitchElement);
+                        }
+                        
+                        i += 3;
+                        glitchSound.currentTime = 0;
+                        glitchSound.play().catch(e => console.log("Sound error:", e));
+                        
+                        setTimeout(() => {
+                            glitchElement.remove();
+                            if (isHal) {
+                                terminal.innerHTML += text.substring(0, i);
+                            } else {
+                                lineElement.textContent = text.substring(0, i);
+                            }
+                        }, 200);
+                    } else {
+                        if (isHal) {
+                            terminal.innerHTML += text[i];
+                        } else {
+                            lineElement.textContent = text.substring(0, i + 1);
+                        }
+                        i++;
+                    }
                     
                     // Random typing speed variation
                     const speed = typingSpeed + (Math.random() * 20 - 10);
@@ -583,7 +806,42 @@ if (Math.random() > 0.995) {
         }
         
         // Initialize on load
-        window.onload = initTerminal;
+        window.onload = function() {
+            initTerminal();
+            createParticles();
+            setInterval(createParticles, 15000);
+        };
+        
+        // Add click event for control buttons
+        document.querySelector('.control-btn.close').addEventListener('click', function() {
+            if (confirm('Terminate HAL connection?')) {
+                terminal.innerHTML = '';
+                typeWriter('[CONNECTION TERMINATED]', () => {
+                    setTimeout(() => {
+                        currentScene = 'boot';
+                        initTerminal();
+                    }, 2000);
+                });
+            }
+        });
+        
+        document.querySelector('.control-btn.minimize').addEventListener('click', function() {
+            terminal.style.opacity = terminal.style.opacity === '0' ? '1' : '0';
+        });
+        
+        document.querySelector('.control-btn.maximize').addEventListener('click', function() {
+            const container = document.querySelector('.terminal-container');
+            if (container.style.width === '100%') {
+                container.style.width = '90%';
+                container.style.height = '80vh';
+                container.style.margin = '5vh auto';
+            } else {
+                container.style.width = '100%';
+                container.style.height = '100vh';
+                container.style.margin = '0';
+                container.style.borderRadius = '0';
+            }
+        });
     </script>
 </body>
 </html>
