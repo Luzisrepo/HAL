@@ -409,6 +409,7 @@
         let typingSpeed = 30;
         let glitchInterval;
         let typingInterval;
+        let currentTextElement = null;
         
         // Enhanced Matrix rain code
         const canvas = document.getElementById('matrixCanvas');
@@ -618,6 +619,7 @@
         // Clear terminal
         function clearTerminal() {
             terminal.innerHTML = '';
+            currentTextElement = null;
         }
         
         // Start random glitch effects
@@ -701,15 +703,15 @@
                     }
                     
                     scrollToBottom();
-                }, true);
+                });
             }
         }
         
-        // Type writer effect
-        function typeWriter(text, callback, isHal = false) {
+        // Type writer effect - FIXED VERSION
+        function typeWriter(text, callback) {
             let i = 0;
-            const lineElement = isHal ? terminal : document.createElement('div');
-            if (!isHal) terminal.appendChild(lineElement);
+            currentTextElement = document.createElement('div');
+            terminal.appendChild(currentTextElement);
             
             // Start playing typing sound on loop
             playTypingSound();
@@ -717,43 +719,34 @@
             
             function type() {
                 if (i < text.length) {
-                    // Random chance to glitch
-                    if (Math.random() > 0.995) {
+                    // Random chance to glitch - reduced frequency
+                    if (Math.random() > 0.997) {
+                        // Create glitch effect
                         const glitchElement = document.createElement('span');
                         glitchElement.className = 'glitch';
                         glitchElement.textContent = text.substring(i, i + 3);
                         glitchElement.setAttribute('data-text', text.substring(i, i + 3));
-                        
-                        if (isHal) {
-                            terminal.appendChild(glitchElement);
-                        } else {
-                            lineElement.appendChild(glitchElement);
-                        }
+                        currentTextElement.appendChild(glitchElement);
                         
                         i += 3;
                         glitchSound.currentTime = 0;
                         glitchSound.play().catch(e => console.log("Sound error:", e));
                         
                         setTimeout(() => {
+                            // Remove glitch and show correct text
                             glitchElement.remove();
-                            if (isHal) {
-                                terminal.innerHTML += text.substring(0, i);
-                            } else {
-                                lineElement.textContent = text.substring(0, i);
-                            }
+                            currentTextElement.textContent = text.substring(0, i);
+                            setTimeout(type, 100);
                         }, 200);
                     } else {
-                        if (isHal) {
-                            terminal.innerHTML += text[i];
-                        } else {
-                            lineElement.textContent = text.substring(0, i + 1);
-                        }
+                        // Normal typing
+                        currentTextElement.textContent = text.substring(0, i + 1);
                         i++;
+                        
+                        // Random typing speed variation
+                        const speed = typingSpeed + (Math.random() * 20 - 10);
+                        setTimeout(type, speed);
                     }
-                    
-                    // Random typing speed variation
-                    const speed = typingSpeed + (Math.random() * 20 - 10);
-                    setTimeout(type, speed);
                 } else {
                     // Stop typing sound when done
                     clearInterval(typingInterval);
